@@ -1,12 +1,11 @@
 import numpy as np
-import scipy.optimize as optimize
 import theano.tensor as tt
 import theano
 
 # def find_root(fun, jac, *args):
 #     return optimize.root(fun=fun, x0=[args[0][1],0.0], jac=jac, args=args).x
 
-class RootFinderDatasetOp(tt.Op):
+class SteadyStateDatasetOp(tt.Op):
     itypes = [tt.dvector]
     otypes = [tt.dmatrix]
 
@@ -29,7 +28,7 @@ class RootFinderDatasetOp(tt.Op):
         self.grad_phi = grad_phi
         self.theta_set = theta_set
 
-        self.gradx_phi = FindRootDatasetDiffOp(self.grad_phi, self.theta_set)
+        self.gradx_phi = SteadyStateDatasetGradOp(self.grad_phi, self.theta_set)
 
         self.find_root = find_root
 
@@ -51,7 +50,7 @@ class RootFinderDatasetOp(tt.Op):
             output.sum(axis=[0,2])
         ]
 
-class FindRootDatasetDiffOp(tt.Op):
+class SteadyStateDatasetGradOp(tt.Op):
     itypes = [tt.dmatrix, tt.dvector]
     otypes = [tt.dtensor3]
 
@@ -62,7 +61,7 @@ class FindRootDatasetDiffOp(tt.Op):
         xs, phi = inputs
         output_storage[0][0] = np.array([self.gradx(x, phi, theta) for theta, x in zip(self.theta_set, xs)])
 
-class RootFinderOp(tt.Op):
+class SteadyStateOp(tt.Op):
     itypes = [tt.dvector, tt.dvector]
     otypes = [tt.dvector]
 
@@ -88,8 +87,8 @@ class RootFinderOp(tt.Op):
         self.grad_theta = grad_theta
         self.grad_phi = grad_phi
 
-        self.gradx_theta = FindRootDiffOp(self.grad_theta)
-        self.gradx_phi = FindRootDiffOp(self.grad_phi)
+        self.gradx_theta = SteadyStateDiffOp(self.grad_theta)
+        self.gradx_phi = SteadyStateDiffOp(self.grad_phi)
 
         self.find_root = find_root
 
@@ -106,7 +105,7 @@ class RootFinderOp(tt.Op):
             np.dot(self.gradx_theta(x, phi, theta).T, output_grads[0]).sum(axis=1)
         ]
 
-class FindRootDiffOp(tt.Op):
+class SteadyStateDiffOp(tt.Op):
     itypes = [tt.dvector, tt.dvector, tt.dvector]
     otypes = [tt.dmatrix]
 
