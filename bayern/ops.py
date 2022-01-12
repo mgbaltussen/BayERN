@@ -7,7 +7,14 @@ class SteadyStateDatasetOp(tt.Op):
     itypes = [tt.dvector]
     otypes = [tt.dmatrix]
 
-    """ Creates an operator that calculates the expected steady-states for multiple conditions
+    """ Creates an operator that calculates the expected steady-states for multiple experimental conditions.
+
+    This operator iterates over all included experimental conditions to calculate the expected steady-state concentrations.
+    It also calculates the gradients (or rather, assembles the computational graph) of the steady-state concentrations with respect to the kinetic parameters. 
+    This is implemented using theano.scan as the iteration algorithm, which is notoriously slow, but the only method currently available.   
+
+    itypes: (K) vector of kinetic parameters (as theano operators)
+    otypes: M x N matrix of (experimental condition) x (steady-state concentration)
 
     Parameters
     ----------
@@ -37,12 +44,10 @@ class SteadyStateDatasetOp(tt.Op):
     def grad(self, inputs, output_grads):
         phi,  = inputs
         x = self(phi)
-        # xs = np.array([self.find_root(self.f, self.j, phi, theta) for theta in self.theta_set])
 
         output, _ = theano.scan(
             lambda a, b: np.dot(a.T, b),
             sequences=[self.gradx_phi(x,phi), output_grads[0]],
-            # non_sequences=[output_grads[0]]
         )
         return [
             output.sum(axis=[0,2])
@@ -52,6 +57,12 @@ class SteadyStateDatasetGradOp(tt.Op):
     itypes = [tt.dmatrix, tt.dvector]
     otypes = [tt.dtensor3]
 
+    """
+    itypes[0]: (M x N) matrix of (experimental condition) x (steady-state concentration)
+    itypes[1]: (K) vector of kinetic parameters (as theano operators)
+    otypes: (M x N x K) tensor of (experimental condition) x (steady-state concentration) x (kinetic parameter)
+
+    """
     def __init__(self, gradx, theta_set) -> None:
         self.gradx = gradx
         self.theta_set = theta_set
@@ -63,7 +74,8 @@ class SteadyStateOp(tt.Op):
     itypes = [tt.dvector, tt.dvector]
     otypes = [tt.dvector]
 
-    """ Creates an operator that calculates the expected steady-state
+    """ Creates an operator that calculates the expected steady-state for a single experimental condition.
+
     Parameters
     ----------
     phi: system parameters
