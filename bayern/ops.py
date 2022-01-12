@@ -2,8 +2,6 @@ import numpy as np
 import theano.tensor as tt
 import theano
 
-# def find_root(fun, jac, *args):
-#     return optimize.root(fun=fun, x0=[args[0][1],0.0], jac=jac, args=args).x
 
 class SteadyStateDatasetOp(tt.Op):
     itypes = [tt.dvector]
