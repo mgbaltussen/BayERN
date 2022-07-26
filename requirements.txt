@@ -1,4 +1,8 @@
-numpy>=1.19
-scipy>=1.6
+numpy>=1.22
+scipy>=1.8
+pandas>=1.2.4
 theano-pymc>=1.1
 pymc3>=3.11
+amici>=0.11.25
+tellurium>=2.2.0
+libsml>=5.19.2
