@@ -34,6 +34,78 @@ def tag_value_or_number(p):
 
 
 class ODESystem(pm.distributions.distribution.Continuous):
+    """" PyMC distribution to infer dynamical systems using an Amici model
+
+    Model inputs such as parameters, fixed parameteres, initial values, and timepoints
+    should be given at distribution initialization as dictionaries 
+    with keys corresponding to identifiers in the Amici model. 
+
+    Examples
+    --------
+        .. code-block:: python
+
+            model = amici.import_model_module(model_name, model_dir).getModel()
+            solver = model.getSolver()m 
+            # Set model and solver settings before passing to PyMC
+
+            with pm.Model():
+                ODESystem(
+                    'model_name',
+                    amici_model=model,
+                    solver=solver,
+                    parameters={
+                            'param_1': pm.Normal('param_1', 0, 1),
+                            'param_2': pm.Normal('param_2', 0, 1),
+                            'sigma': pm.Exponential('sigma', 2.0) # The sigma parameter should always be present for noise estimation
+                        },
+                    fixed=={
+                            'fixed_1': 1.0
+                            'fixed_1': 2.0
+                        },,
+                    initial_states={'x': 0.0, 'y': 0.0},
+                    timepoints=np.linspace(0, 10, 100),
+                    observed={'x': data.x.values, 'y': data.y.values},
+                )
+                trace = pm.sample()
+
+        If direct inference of the dynamical system is to expensive, and only predictions are required, 
+        we can instantiate the ODESystem distribution after inference exclusively for posterior predictive checks.
+        The ODESystem class supports random sampling either from a given trace, or directly from random distributions (sample_prior_predictive).
+
+        .. code-block:: python
+            with pm.Model():
+                param_1 = pm.Normal('param_1', 0, 1)
+                param_2 = pm.Normal('param_2', 0, 1)
+                sigma = pm.Exponential('sigma', 2.0)
+
+                ### First perform inference on a (non-dynamical system) model to obtain parameter estimates
+
+                pm.Normal("obs", mu=some_non_ode_model(param_1, param_2), sigma=sigma, obs=data)
+                trace = pm.sample()
+
+                ### Then register the ODESystem distribution and perform posterior predictive sampling on it.
+
+                ODESystem(
+                    'model_name',
+                    amici_model=model,
+                    solver=solver,
+                    parameters={
+                            'param_1': param_1
+                            'param_2': param_2
+                            'sigma': sigma
+                        },
+                    fixed=={
+                            'fixed_1': 1.0
+                            'fixed_1': 2.0
+                        },,
+                    initial_states={'x': 0.0, 'y': 0.0},
+                    timepoints=np.linspace(0, 10, 100),
+                    observed={'x': data.x.values, 'y': data.y.values},
+                )
+                post_pred = pm.sample_posterior_predictive(trace, var_names=['model_name])
+
+    """
+
     def __init__(
         self,
         amici_model: amici.Model,
