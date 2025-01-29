@@ -1,9 +1,12 @@
 import numpy as np
-import theano.tensor as tt
-import theano
+import pytensor
+import pytensor.tensor as tt
+from pytensor.graph.op import Op
+# import theano.tensor as tt
+# import theano
 
 
-class SteadyStateDatasetOp(tt.Op):
+class SteadyStateDatasetOp(Op):
     itypes = [tt.dvector]
     otypes = [tt.dmatrix]
 
@@ -45,7 +48,7 @@ class SteadyStateDatasetOp(tt.Op):
         phi,  = inputs
         x = self(phi)
 
-        output, _ = theano.scan(
+        output, _ = pytensor.scan(
             lambda a, b: np.dot(a.T, b),
             sequences=[self.gradx_phi(x,phi), output_grads[0]],
         )
@@ -53,7 +56,7 @@ class SteadyStateDatasetOp(tt.Op):
             output.sum(axis=[0,2])
         ]
 
-class SteadyStateDatasetGradOp(tt.Op):
+class SteadyStateDatasetGradOp(Op):
     itypes = [tt.dmatrix, tt.dvector]
     otypes = [tt.dtensor3]
 
@@ -70,7 +73,7 @@ class SteadyStateDatasetGradOp(tt.Op):
         xs, phi = inputs
         output_storage[0][0] = np.array([self.gradx(x, phi, theta) for theta, x in zip(self.theta_set, xs)])
 
-class SteadyStateOp(tt.Op):
+class SteadyStateOp(Op):
     itypes = [tt.dvector, tt.dvector]
     otypes = [tt.dvector]
 
@@ -115,12 +118,12 @@ class SteadyStateOp(tt.Op):
             np.dot(self.gradx_theta(x, phi, theta).T, output_grads[0]).sum(axis=1)
         ]
 
-class SteadyStateDiffOp(tt.Op):
+class SteadyStateDiffOp(Op):
     itypes = [tt.dvector, tt.dvector, tt.dvector]
     otypes = [tt.dmatrix]
 
     def __init__(self, gradx) -> None:
         self.gradx = gradx
-    def perform(self, node, inputs, outputs):
+    def perform(self, node, inputs, output_storage):
         x, phi, theta = inputs
         outputs[0][0] = self.gradx(x, phi, theta)
