@@ -8,7 +8,7 @@ with open('README.md') as f:
 
 setup(
     name="BayERN",
-    version="0.2.0",
+    version="0.3.0dev",
     description="A Python package to perform Bayesian inference on enzyme kinetics data with PyMC3",
     long_description=readme,
     packages=['bayern'],
