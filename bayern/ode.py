@@ -5,12 +5,17 @@ import itertools
 import numpy as np
 import pandas as pd
 
+import pytensor
+import pytensor.tensor as pt
 import theano
 import theano.tensor as tt
 
-import pymc3 as pm
-from pymc3.distributions import generate_samples, draw_values, transforms
-from pymc3.model import Model
+import pymc as pm
+from pymc.distributions import generate_samples, draw_values, transforms
+from pymc.model import Model
+# import pymc3 as pm
+# from pymc3.distributions import generate_samples, draw_values, transforms
+# from pymc3.model import Model
 import amici
 
 
